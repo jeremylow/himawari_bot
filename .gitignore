@@ -1,0 +1,16 @@
+.sass-cache/**
+*.swp
+*.pyc
+*.sassc
+static/fonts/fonts/*
+node_modules/
+__pycache__/
+.vagrant/
+.vagrant/**
+.tox
+*.egg-info/
+.coverage
+.cache
+.ipynb_checkpoints/
+*.ipynb
+.idea/
