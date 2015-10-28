@@ -48,7 +48,7 @@ def resize_image(image):
     cmd = CONVERSION_COMMAND.format(
         input_name=image,
         size=500,
-        qual=90,
+        qual=80,
         output_name=image)
     subprocess.call(shlex.split(cmd))
 
