@@ -10,12 +10,15 @@ from bs4 import BeautifulSoup
 import tweepy
 
 import himawari_config
+from celery_conf import app
 
 URL = (
     "http://rammb.cira.colostate.edu/ramsdis/online/"
     "archive_hi_res.asp?data_folder=himawari-8/full_disk_ahi_true_color"
     "&width=800&height=800")
+
 LINK_BASE_URL = "http://rammb.cira.colostate.edu/ramsdis/online/"
+
 CONVERSION_COMMAND = (
     'convert {input_name}  -thumbnail {size}  -quality {qual}'
     ' -unsharp 0.05x0.05+12+0.001'
@@ -84,6 +87,7 @@ def tweet_gif(gif, status):
     api.update_with_media(gif, status=status)
 
 
+@app.task
 def main():
     status = scrape_image_links()
     gif = images_to_gif()

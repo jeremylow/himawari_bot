@@ -6,10 +6,10 @@ from datetime import timedelta
 from kombu import Exchange, Queue
 
 app = Celery(
-    'himawari8bot',
+    'himawari_bot',
     broker='amqp://',
     backend='amqp://',
-    include=['himari_tasks']
+    include=['himawari_tasks']
 )
 
 app.conf.update(
@@ -20,13 +20,12 @@ app.conf.update(
             'schedule': timedelta(hours=2)
         },
     },
-    CELERY_IMPORTS=('himawari_bot.himawari_tasks',),
     CELERY_DEFAULT_QUEUE='himawari',
     CELERY_QUEUES=(
         Queue('himawari', Exchange('himawari'), routing_key='himawari'),
     ),
     CELERY_ROUTES={
-        'himawari.tasks': {'queue': 'himawari'}}
+        'himawari_tasks.main': {'queue': 'himawari'}}
 )
 
 if __name__ == '__main__':
