@@ -17,7 +17,7 @@ app.conf.update(
     CELERYBEAT_SCHEDULE={
         'main': {
             'task': 'himawari_tasks.main',
-            'schedule': timedelta(minutes=10)
+            'schedule': timedelta(hours=2)
         },
     },
     CELERY_DEFAULT_QUEUE='himawari',
