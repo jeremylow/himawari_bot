@@ -73,7 +73,7 @@ def scrape_image_links():
 
 
 def images_to_gif():
-    cmd = "convert -delay 10 -loop 0 full_disk*.jpg gif.gif"
+    cmd = "convert -delay 12 -loop 0 full_disk*.jpg gif.gif"
     subprocess.call(shlex.split(cmd))
     gif_path = os.path.realpath("./gif.gif")
     return gif_path
