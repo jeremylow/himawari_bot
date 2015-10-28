@@ -1,23 +1,16 @@
 import os
 import datetime
 import requests
-import re
 
 import subprocess
 import shlex
 
-from bs4 import BeautifulSoup
 import tweepy
 
 import himawari_config
 from celery_conf import app
 
-URL = (
-    "http://rammb.cira.colostate.edu/ramsdis/online/"
-    "archive_hi_res.asp?data_folder=himawari-8/full_disk_ahi_true_color"
-    "&width=800&height=800")
-
-LINK_BASE_URL = "http://rammb.cira.colostate.edu/ramsdis/online/"
+URL = "http://www.jma.go.jp/en/gms/imgs_c/6/visible/0/"
 
 CONVERSION_COMMAND = (
     'convert {input_name}  -thumbnail {size}  -quality {qual}'
@@ -44,39 +37,59 @@ def _get_api():
     return api
 
 
+def _round_time(dt):
+    # Round date down to nearest 1/2 hour, then remove seconds & microseconds
+    rounded_date = dt - datetime.timedelta(minutes=dt.minute % 30)
+    rounded_date = rounded_date.replace(second=0, microsecond=0)
+
+    # Give them time to upload new image
+    rounded_date -= datetime.timedelta(minutes=30)
+    return rounded_date
+
+
+def _date_to_filename(date):
+    fn = "{0}-{1}".format(
+        date.strftime("%Y%m%d%H%M"),
+        '00.png')
+    return fn
+
+
+def _get_recent_images_list(start_time=None):
+    images = []
+    for i in range(0, 36):
+        fn = _date_to_filename(start_time - datetime.timedelta(minutes=30))
+        images.append(fn)
+        start_time -= datetime.timedelta(minutes=30)
+    return images
+
+
 def resize_image(image):
     cmd = CONVERSION_COMMAND.format(
         input_name=image,
-        size=450,
-        qual=75,
+        size=500,
+        qual=80,
         output_name=image)
     subprocess.call(shlex.split(cmd))
 
 
 def scrape_image_links():
-    page_content = requests.get(URL)._content
-    soup = BeautifulSoup(page_content, 'html.parser')
-    links = soup.find_all('a', string=re.compile('^Image'), limit=24)
+    now = datetime.datetime.utcnow()
+    rounded_now = _round_time(now)
+    images = _get_recent_images_list(start_time=rounded_now)
 
-    image_urls = [link.attrs['href'] for link in links]
-
-    for image in image_urls:
+    for image in images:
         image_name = os.path.basename(image)
         with open(image_name, 'wb') as f:
-            data = requests.get("{0}{1}".format(
-                LINK_BASE_URL,
-                image))
+            image_url = URL + image
+            data = requests.get(image_url)
             f.write(data._content)
         resize_image(image_name)
-    match = match = re.search(r'(?P<date>[\d]+)\.jpg', image_urls[0])
-    last_image_datetime = datetime.datetime.strptime(
-        match.group(1)[:12],
-        "%Y%m%d%H%M")
-    return last_image_datetime.isoformat()
+
+    return rounded_now.isoformat()
 
 
 def images_to_gif():
-    cmd = "convert -delay 12 -loop 0 full_disk*.jpg gif.gif"
+    cmd = "convert -delay 16 -loop 0 *.png gif.gif"
     subprocess.call(shlex.split(cmd))
     gif_path = os.path.realpath("./gif.gif")
     return gif_path
@@ -91,8 +104,11 @@ def tweet_gif(gif, status):
 def main():
     status = scrape_image_links()
     gif = images_to_gif()
-    tweet_gif(gif, status)
-    subprocess.call('rm *.jpg', shell=True)
+    try:
+        tweet_gif(gif, status)
+    except Exception as e:
+        print(e)
+    subprocess.call('rm *.png', shell=True)
     subprocess.call('rm gif.gif', shell=True)
 
 if __name__ == '__main__':
