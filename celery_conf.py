@@ -20,7 +20,7 @@ app.conf.update(
             'schedule': timedelta(hours=2)
         },
     },
-    CELERY_IMPORTS=('himawari_bot.gifing_bot_tasks',),
+    CELERY_IMPORTS=('himawari_bot.himawari_tasks',),
     CELERY_DEFAULT_QUEUE='himawari',
     CELERY_QUEUES=(
         Queue('himawari', Exchange('himawari'), routing_key='himawari'),
