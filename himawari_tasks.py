@@ -23,7 +23,8 @@ CONVERSION_COMMAND = (
     ' -define png:compression-strategy=1'
     ' -define png:exclude-chunk=all'
     ' -interlace Line'
-    ' -modulate 115,110,100'
+    ' -modulate 115,150,107'
+    ' -crop 800x800'
     ' {output_name}')
 
 
