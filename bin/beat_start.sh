@@ -13,4 +13,4 @@ source $VENVDIR/bin/activate
 export PYTHONPATH=$SERVERDIR:$PYTHONPATH
 
 # Programs meant to be run under supervisor should not daemonize themselves (do not use --daemon)
-exec celery -A celery_conf beat -l INFO
+exec celery -A celery_conf beat -l INFO -n himawari_bot_beat

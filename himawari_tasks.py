@@ -48,7 +48,7 @@ def resize_image(image):
     cmd = CONVERSION_COMMAND.format(
         input_name=image,
         size=500,
-        qual=90,
+        qual=80,
         output_name=image)
     subprocess.call(shlex.split(cmd))
 
@@ -92,8 +92,8 @@ def main():
     status = scrape_image_links()
     gif = images_to_gif()
     tweet_gif(gif, status)
-    subprocess.call(shlex.split('rm *.jpg'))
-    subprocess.call(shlex.split('rm *.gif'))
+    subprocess.call('rm *.jpg', shell=True)
+    subprocess.call('rm gif.gif', shell=True)
 
 if __name__ == '__main__':
     main()

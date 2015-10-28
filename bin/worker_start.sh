@@ -28,4 +28,4 @@ export PYTHONPATH=$SERVERDIR:$PYTHONPATH
 # execute the program using the virtualenv's version of python.
 cd $SERVERDIR
 
-exec celery -A celery_conf worker -Q himawari -l INFO
+exec celery -A celery_conf worker -Q himawari -l INFO -n himawari_bot_worker
