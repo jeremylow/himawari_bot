@@ -24,7 +24,7 @@ CONVERSION_COMMAND = (
     ' -define png:exclude-chunk=all'
     ' -interlace Line'
     ' -modulate 115,150,107'
-    ' -crop 800x800'
+    # ' -crop 800x800 +repage'
     ' {output_name}')
 
 
@@ -68,9 +68,22 @@ def resize_image(image):
     cmd = CONVERSION_COMMAND.format(
         input_name=image,
         size=500,
-        qual=80,
+        qual=85,
         output_name=image)
     subprocess.call(shlex.split(cmd))
+
+    # base, ext = os.path.splitext(image)
+
+    # # Delete the cropped portion which is inexplicably saved during the
+    # # cropping procedure in imagemagick.
+    # subprocess.call(
+    #     "rm {baseimage}-1{ext}".format(baseimage=base, ext=ext),
+    #     shell=True)
+
+    # # Delete the original image, leaving only the cropped image.
+    # subprocess.call(
+    #     "rm {image}".format(image=image),
+    #     shell=True)
 
 
 def scrape_image_links():
