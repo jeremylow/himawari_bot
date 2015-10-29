@@ -23,7 +23,7 @@ CONVERSION_COMMAND = (
     ' -define png:compression-strategy=1'
     ' -define png:exclude-chunk=all'
     ' -interlace Line'
-    ' -modulate 115,150,107'
+    ' -modulate 115,180,107'
     # ' -crop 800x800 +repage'
     ' {output_name}')
 
@@ -57,7 +57,7 @@ def _date_to_filename(date):
 
 def _get_recent_images_list(start_time=None):
     images = []
-    for i in range(0, 36):
+    for i in range(0, 20):
         fn = _date_to_filename(start_time - datetime.timedelta(minutes=30))
         images.append(fn)
         start_time -= datetime.timedelta(minutes=30)
@@ -67,8 +67,8 @@ def _get_recent_images_list(start_time=None):
 def resize_image(image):
     cmd = CONVERSION_COMMAND.format(
         input_name=image,
-        size=500,
-        qual=85,
+        size=450,
+        qual=80,
         output_name=image)
     subprocess.call(shlex.split(cmd))
 
