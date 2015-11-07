@@ -57,12 +57,11 @@ class HiResSequence(object):
         return api
 
     @staticmethod
-    def _px_to_lat_lng(start_pts):
-        x, y = start_pts
-        x += 2750
-        y += 2750
-        lat_km, lng_km = geometry.px_to_km(x, y)
-        lat, lng = geometry.km_to_lat_lng(lat_km, lng_km)
+    def _px_to_lat_lng(lat_start, lng_start):
+        print("latstart, lngstart", lat_start, lng_start)
+        lat_km, lng_km = geometry.px_to_km(lat_start, lng_start)
+        print("latkm, lngkm", lat_km, lng_km)
+        return geometry.km_to_lat_lng(lat_km, lng_km)
 
     def _get_start_coord(self):
         """
@@ -85,21 +84,20 @@ class HiResSequence(object):
         return (lat_px, lng_px)
 
     @staticmethod
-    def _crop_hires_images(images, start_pts):
+    def _crop_hires_images(images, lat_start, lng_start):
         """
         Create a set of 1280x720 png images cropped from the
         5500 x 5500 full-sized images.
 
         Args:
             images (list): List of hi-res images to crop down.
-            start_pts (tuple): Tuple of integers at which to start the crop.
-                Should be in the form of (leftMostPoint, topMostPoint).
+            lat_start, lng_start: upper, left-most point to start the crop
 
         Returns:
             None
         """
         width, height = 1280, 720
-        left, top = start_pts
+        top, left  = lat_start, lng_start
 
         for idx, image in enumerate(sorted(images)):
             filename = 'hires/' + image
@@ -156,9 +154,9 @@ class HiResSequence(object):
     def make_hires_animation(self):
         images = os.listdir('hires/')
         out = datetime.datetime.utcnow().strftime("%Y%m%d%H%M")
-        start_pts = self._get_start_coord()
-        self._crop_hires_images(images, start_pts)
-        coordinates = self._px_to_lat_lng(start_pts)
+        lat_start, lng_start = self._get_start_coord()
+        self._crop_hires_images(images, lat_start, lng_start)
+        coordinates = self._px_to_lat_lng(lat_start, lng_start)
         cmd = ("ffmpeg -framerate 8 -i img%03d.png "
                "-c:v libx264 -vf fps=8 -pix_fmt yuv420p {0}.mp4".format(out))
         subprocess.call(shlex.split(cmd))
@@ -168,8 +166,11 @@ class HiResSequence(object):
 
 def main():
     seq = HiResSequence()
-    mp4 = seq.make_hires_animation()
-    print(mp4)
+    coordinates, mp4 = seq.make_hires_animation()
+    print(coordinates, mp4)
 
 if __name__ == '__main__':
+    # s = HiResSequence()
+    # lt, lg = s._get_start_coord()
+    # print('act lat,lng', s._px_to_lat_lng(lt, lg))
     main()

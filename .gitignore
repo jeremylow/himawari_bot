@@ -18,3 +18,4 @@ celerybeat.pid
 celerybeat_schedule
 hires/**
 videos/**
+lowres/**

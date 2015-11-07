@@ -5,3 +5,4 @@ twython
 celery
 pillow
 pyproj
+shapely

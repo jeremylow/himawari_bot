@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y \
     python-virtualenv \
     imagemagick \
     git \
-    ffmpeg
+    ffmpeg \
+    libgeos-dev \
+    zlib1g-dev \
+    libjpeg-dev \
 
 WORKDIR /data
 
