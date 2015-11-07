@@ -3,3 +3,8 @@
 mkdir hires
 mkdir lowres
 mkdir videos
+
+pip install -r requirements.txt
+
+ln -s himawari_cron /etc/cron.d/himawari_cron
+chmod 0644 /etc/cron.d/himawari_cron

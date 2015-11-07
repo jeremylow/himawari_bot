@@ -19,8 +19,11 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     libgeos-dev \
     zlib1g-dev \
-    libjpeg-dev \
+    libjpeg-dev
+
+RUN git pull https://github.com/jeremylow/himawari_bot.git
+RUN bootstrap.sh
 
 WORKDIR /data
 
-CMD ["bash"]
+CMD cron

@@ -10,10 +10,10 @@ from PIL import Image
 
 from bs4 import BeautifulSoup
 
-import tweepy
+from twython import Twython
 from shapely.geometry import Point, MultiPoint
 
-import himawari_config
+import config
 import geometry
 
 
@@ -48,12 +48,11 @@ class HiResSequence(object):
 
     @staticmethod
     def _get_api():
-        auth = tweepy.OAuthHandler(
-            himawari_config.CONSUMER_KEY,
-            himawari_config.CONSUMER_SECRET)
-        auth.set_access_token(himawari_config.ACCESS_KEY,
-                              himawari_config.ACCESS_SECRET)
-        api = tweepy.API(auth, wait_on_rate_limit=True)
+        api = Twython(
+            config.CONSUMER_KEY,
+            config.CONSUMER_SECRET,
+            config.ACCESS_KEY,
+            config.ACCESS_SECRET)
         return api
 
     @staticmethod
@@ -163,14 +162,23 @@ class HiResSequence(object):
         mp4_path = os.path.realpath("./{0}.mp4".format(out))
         return (coordinates, mp4_path)
 
+    def tweet_video(self, coordinates=None, mp4=None):
+        video = open(mp4)
+        api = self._get_api()
+        response = api.upload_video(media=video, media_type='video/mp4')
+        api.update_status(status=coordinates, media_ids=[response['media_id']])
 
-def main():
+
+def make_local_video():
     seq = HiResSequence()
     coordinates, mp4 = seq.make_hires_animation()
     print(coordinates, mp4)
 
+
+def tweet_video():
+    seq = HiResSequence()
+    coordinates, mp4 = seq.make_hires_animation()
+    seq.tweet_video(coordinates, mp4)
+
 if __name__ == '__main__':
-    # s = HiResSequence()
-    # lt, lg = s._get_start_coord()
-    # print('act lat,lng', s._px_to_lat_lng(lt, lg))
-    main()
+    tweet_video()

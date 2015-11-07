@@ -1,0 +1,1 @@
+*/5 * * * * root python /data/himawari_bot/himawari_hires.py
