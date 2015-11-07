@@ -150,6 +150,10 @@ class HiResSequence(object):
             os.remove('hires/' + img)
         return True
 
+    def refresh_images(self, num=60):
+        self._get_cira_images(num)
+        self._delete_old_cira_images(num=num)
+
     def make_hires_animation(self):
         images = os.listdir('hires/')
         out = datetime.datetime.utcnow().strftime("%Y%m%d%H%M")
@@ -177,6 +181,7 @@ def make_local_video():
 
 def tweet_video():
     seq = HiResSequence()
+    seq.refresh_images()
     coordinates, mp4 = seq.make_hires_animation()
     seq.tweet_video(coordinates, mp4)
 
