@@ -16,3 +16,6 @@ __pycache__/
 .idea/
 celerybeat.pid
 celerybeat_schedule
+hires/**
+videos/**
+lowres/**
