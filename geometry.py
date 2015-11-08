@@ -52,3 +52,12 @@ def km_to_lat_lng(lat_km=None, lng_km=None):
     """
     lng, lat = sat(lng_km, lat_km, radians=False, errcheck=True, inverse=True)
     return(-lat, lng)
+
+
+def px_to_lat_long(lat, lng):
+    try:
+        lat, lng = px_to_km(lat, lng)
+        lat, lng = km_to_lat_lng(lat, lng)
+        return lat, lng
+    except:
+        return ("Space, Space")
