@@ -1,5 +1,10 @@
+from __future__ import print_function
+
 import os
 import datetime
+import json
+import logging
+import logging.handlers
 import random
 import re
 import requests
@@ -10,19 +15,20 @@ from PIL import Image
 
 from bs4 import BeautifulSoup
 
-from twython import Twython
+import tweepy
 from shapely.geometry import Point, MultiPoint
 
 import config
 import geometry
+
+LOGFILE = 'hires.log'
 
 
 class HiResSequence(object):
 
     def __init__(self, *args, **kwargs):
         self.CIRA_IMG_BASE_URL = (
-            "http://rammb.cira.colostate.edu/ramsdis/online/images/hi_res/"
-            "himawari-8/full_disk_ahi_true_color/")
+            "http://rammb.cira.colostate.edu/ramsdis/online/")
 
         self.CIRA_LIST_URL = (
             "http://rammb.cira.colostate.edu/ramsdis/online/archive_hi_res.asp"
@@ -46,21 +52,28 @@ class HiResSequence(object):
         # Polygon delimiting the 'interesting' parts of the Earth.
         self.EARTH_POLYGON = MultiPoint(self.POINTS).convex_hull
 
-    @staticmethod
-    def _get_api():
-        api = Twython(
-            config.CONSUMER_KEY,
-            config.CONSUMER_SECRET,
-            config.ACCESS_KEY,
-            config.ACCESS_SECRET)
-        return api
+        self.logger = logging.getLogger('HiResLogger')
+        self.logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.RotatingFileHandler(
+            LOGFILE,
+            maxBytes=1024*1024,
+            backupCount=5)
+        self.logger.addHandler(handler)
 
-    @staticmethod
-    def _px_to_lat_lng(lat_start, lng_start):
-        print("latstart, lngstart", lat_start, lng_start)
-        lat_km, lng_km = geometry.px_to_km(lat_start, lng_start)
-        print("latkm, lngkm", lat_km, lng_km)
-        return geometry.km_to_lat_lng(lat_km, lng_km)
+    def _get_api(self):
+        try:
+            auth = tweepy.OAuthHandler(
+                config.CONSUMER_KEY,
+                config.CONSUMER_SECRET)
+            auth.set_access_token(config.ACCESS_KEY,
+                                  config.ACCESS_SECRET)
+            api = tweepy.API(auth, wait_on_rate_limit=True)
+            return api
+        except Exception as e:
+            print(e)
+            self.logger.debug("{0} : {1}".format(
+                datetime.datetime.utcnow().isoformat(), e))
+            return False
 
     def _get_start_coord(self):
         """
@@ -83,9 +96,9 @@ class HiResSequence(object):
         return (lat_px, lng_px)
 
     @staticmethod
-    def _crop_hires_images(images, lat_start, lng_start):
+    def _crop_hires_images(images, lat_start=None, lng_start=None):
         """
-        Create a set of 1280x720 png images cropped from the
+        Create a set of 800x800 png images cropped from the
         5500 x 5500 full-sized images.
 
         Args:
@@ -95,12 +108,12 @@ class HiResSequence(object):
         Returns:
             None
         """
-        width, height = 1280, 720
-        top, left  = lat_start, lng_start
+        width, height = 720, 720
+        top, left = lat_start, lng_start
 
         for idx, image in enumerate(sorted(images)):
             filename = 'hires/' + image
-            print(filename)
+            print("got ", filename)
             im = Image.open(filename)
             im2 = im.crop((left, top, left+width, top+height))
             im2.save("img{0}.png".format(str(idx).zfill(3)))
@@ -124,17 +137,22 @@ class HiResSequence(object):
         prev_downloaded_images = os.listdir('hires/')
 
         for image in image_urls:
+            print(image)
             image_name = os.path.basename(image)
+            full_image_url = "{0}{1}".format(
+                    self.CIRA_IMG_BASE_URL,
+                    image)
+            print(full_image_url)
 
             if image_name in prev_downloaded_images:
                 # Don't redownload images we already have.
                 continue
 
             with open('hires/' + image_name, 'wb') as f:
-                data = requests.get("{0}{1}".format(
-                    self.CIRA_IMG_BASE_URL,
-                    image))
+                data = requests.get(full_image_url)
                 f.write(data._content)
+            if os.path.getsize('hires/' + image_name) < 1024:
+                os.remove('hires/' + image_name)
         return True
 
     @staticmethod
@@ -143,6 +161,7 @@ class HiResSequence(object):
         Only keep the most recent `num` images (my server is not that large)
         """
         images = sorted(os.listdir('hires/'))
+
         num_images_to_del = len(images) - num
         if num_images_to_del <= 0:
             return True
@@ -154,36 +173,65 @@ class HiResSequence(object):
         self._get_cira_images(num)
         self._delete_old_cira_images(num=num)
 
-    def make_hires_animation(self):
+    def make_hires_animation(self,
+                             lat_start=None,
+                             lng_start=None,
+                             refresh=False):
+        if refresh:
+            self.refresh_images(num=90)
         images = os.listdir('hires/')
         out = datetime.datetime.utcnow().strftime("%Y%m%d%H%M")
-        lat_start, lng_start = self._get_start_coord()
-        self._crop_hires_images(images, lat_start, lng_start)
-        coordinates = self._px_to_lat_lng(lat_start, lng_start)
-        cmd = ("ffmpeg -framerate 8 -i img%03d.png "
-               "-c:v libx264 -vf fps=8 -pix_fmt yuv420p {0}.mp4".format(out))
+
+        if not (lat_start and lng_start):
+            lat_start, lng_start = self._get_start_coord()
+
+        self._crop_hires_images(images,
+                                lat_start=lat_start,
+                                lng_start=lng_start)
+        coordinates = geometry.px_to_lat_long(lat_start+400, lng_start+400)
+
+        cmd = ("ffmpeg -framerate 6 -i img%03d.png "
+               "-c:v libx264 -vf fps=6 -pix_fmt yuv420p {0}.mp4".format(out))
         subprocess.call(shlex.split(cmd))
         mp4_path = os.path.realpath("./{0}.mp4".format(out))
+
+        self.logger.debug("{0}: Coord: {1}, MP4: {2}".format(
+            datetime.datetime.utcnow().isoformat(),
+            coordinates,
+            mp4_path))
+
+        subprocess.call('rm *.png', shell=True)
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
-        video = open(mp4)
-        api = self._get_api()
-        response = api.upload_video(media=video, media_type='video/mp4')
-        api.update_status(status=coordinates, media_ids=[response['media_id']])
+        if not mp4:
+            self.refresh_images(num=90)
+            coordinates, mp4 = self.make_hires_animation()
+
+        try:
+            api = self._get_api()
+            response = json.loads(
+                api.video_upload(filename=mp4, max_size=15728640))
+            api.update_status(
+                status="Coordinates: {0}".format(str(coordinates)),
+                media_ids=[response['media_id']])
+        except Exception as e:
+            self.logger.debug("{0}: {1}".format(
+                datetime.datetime.utcnow().isoformat(), e))
+        os.remove(mp4)
 
 
 def make_local_video():
     seq = HiResSequence()
-    coordinates, mp4 = seq.make_hires_animation()
+    coordinates, mp4 = seq.make_hires_animation(
+        refresh=False)
     print(coordinates, mp4)
 
 
 def tweet_video():
     seq = HiResSequence()
-    seq.refresh_images()
-    coordinates, mp4 = seq.make_hires_animation()
-    seq.tweet_video(coordinates, mp4)
+    seq.tweet_video()
 
 if __name__ == '__main__':
+    # make_local_video()
     tweet_video()
