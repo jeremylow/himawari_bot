@@ -28,6 +28,10 @@ LOGFILE = join(BASE_DIR, 'hires.log')
 HIRES_FOLDER = join(BASE_DIR, 'hires')
 
 
+def time_now():
+    return datetime.datetime.utcnow().isoformat()
+
+
 class HiResSequence(object):
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +68,7 @@ class HiResSequence(object):
             backupCount=5)
         self.logger.addHandler(handler)
         self.logger.debug("{0}: Initialized HiResSequence".format(
-            datetime.datetime.utcnow().isoformat()
+            time_now()
         ))
 
     def _get_api(self):
@@ -78,8 +82,8 @@ class HiResSequence(object):
             return api
         except Exception as e:
             print(e)
-            self.logger.debug("{0} : {1}".format(
-                datetime.datetime.utcnow().isoformat(), e))
+            self.logger.debug("{0}: {1}".format(
+                time_now(), e))
             return False
 
     def _get_start_coord(self):
@@ -102,8 +106,7 @@ class HiResSequence(object):
         lng_px, lat_px = (int(p.x), int(5500 - p.y))
         return (lat_px, lng_px)
 
-    @staticmethod
-    def _crop_hires_images(images, lat_start=None, lng_start=None):
+    def _crop_hires_images(self, images, lat_start=None, lng_start=None):
         """
         Create a set of 720,720 png images cropped from the
         5500 x 5500 full-sized images.
@@ -128,10 +131,16 @@ class HiResSequence(object):
                 os.remove(filename)
                 continue
 
-            im = Image.open(filename)
-            im2 = im.crop((left, top, left+width, top+height))
-            crop_fn = "img{0}.png".format(str(idx).zfill(3))
-            im2.save(join(BASE_DIR, crop_fn))
+            try:
+                im = Image.open(filename)
+                im2 = im.crop((left, top, left+width, top+height))
+                crop_fn = "img{0}.png".format(str(idx).zfill(3))
+                im2.save(join(BASE_DIR, crop_fn))
+            except Exception as e:
+                self.logger.debug("{0}: {1} failed with exception {2}".format(
+                    time_now(),
+                    str(filename),
+                    str(e)))
 
     def _get_cira_images(self, num=60):
         """
@@ -218,15 +227,14 @@ class HiResSequence(object):
         mp4_path = os.path.realpath(out)
 
         self.logger.debug("{0}: Coord: {1}, MP4: {2}".format(
-            datetime.datetime.utcnow().isoformat(),
+            time_now(),
             coordinates,
             mp4_path))
 
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
-        self.logger.debug("{0}: Starting tweet".format(
-            datetime.datetime.utcnow().isoformat()))
+        self.logger.debug("{0}: Starting tweet".format(time_now()))
         if not mp4:
             self.refresh_images(num=90)
             coordinates, mp4 = self.make_hires_animation()
@@ -240,10 +248,10 @@ class HiResSequence(object):
                 media_ids=[response['media_id']])
         except Exception as e:
             self.logger.debug("{0}: {1}".format(
-                datetime.datetime.utcnow().isoformat(), e))
+                time_now(), e))
         os.remove(mp4)
         self.logger.debug("{0}: Finished tweet".format(
-            datetime.datetime.utcnow().isoformat()))
+            time_now()))
 
 
 def make_local_video():
