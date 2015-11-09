@@ -1,1 +1,1 @@
-*/10 * * * * root python /data/himawari_bot/himawari_hires.py
+* */2 * * * root python /data/himawari_bot/himawari_hires.py

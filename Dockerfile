@@ -29,3 +29,8 @@ RUN git clone https://github.com/jeremylow/himawari_bot.git
 RUN mkdir /data/himawari_bot/hires /data/himawari_bot/lowres /data/himawari_bot/videos
 
 RUN /bin/bash /data/himawari_bot/bootstrap.sh
+
+RUN cp /data/himawari_bot/himawari_cron /etc/cron.d/
+
+RUN apt-get install -y vim 
+

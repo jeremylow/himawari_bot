@@ -63,6 +63,9 @@ class HiResSequence(object):
             maxBytes=1024*1024,
             backupCount=5)
         self.logger.addHandler(handler)
+        self.logger.debug("{0}: Initialized HiResSequence".format(
+            datetime.datetime.utcnow.isoformat()
+        ))
 
     def _get_api(self):
         try:
@@ -123,7 +126,6 @@ class HiResSequence(object):
             crop_fn = "img{0}.png".format(str(idx).zfill(3))
             im2.save(os.path.join(BASE_DIR, crop_fn))
 
-
     def _get_cira_images(self, num=60):
         """
         Scrapes the CIRA site for links to hi-res images.
@@ -143,12 +145,10 @@ class HiResSequence(object):
         prev_downloaded_images = os.listdir(HIRES_FOLDER)
 
         for image in image_urls:
-            print(image)
             image_name = os.path.basename(image)
             full_image_url = "{0}{1}".format(
                     self.CIRA_IMG_BASE_URL,
                     image)
-            print(full_image_url)
 
             if image_name in prev_downloaded_images:
                 # Don't redownload images we already have.
