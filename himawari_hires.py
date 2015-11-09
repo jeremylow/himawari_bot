@@ -64,7 +64,7 @@ class HiResSequence(object):
             backupCount=5)
         self.logger.addHandler(handler)
         self.logger.debug("{0}: Initialized HiResSequence".format(
-            datetime.datetime.utcnow.isoformat()
+            datetime.datetime.utcnow().isoformat()
         ))
 
     def _get_api(self):
@@ -218,6 +218,8 @@ class HiResSequence(object):
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
+        self.logger.debug("{0}: Starting tweet".format(
+            datetime.datetime.utcnow().isoformat()))
         if not mp4:
             self.refresh_images(num=90)
             coordinates, mp4 = self.make_hires_animation()
@@ -233,6 +235,8 @@ class HiResSequence(object):
             self.logger.debug("{0}: {1}".format(
                 datetime.datetime.utcnow().isoformat(), e))
         os.remove(mp4)
+        self.logger.debug("{0}: Finished tweet".format(
+            datetime.datetime.utcnow().isoformat()))
 
 
 def make_local_video():
