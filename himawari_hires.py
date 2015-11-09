@@ -201,7 +201,11 @@ class HiResSequence(object):
 
         cmd = "{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out)
         print(cmd)
-        subprocess.call("{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out), shell=True)
+        subprocess.call("{0}/hires_mp4.sh {1} {2}".format(
+                BASE_DIR,
+                BASE_DIR,
+                out),
+            shell=True)
         mp4_path = os.path.realpath(out)
 
         self.logger.debug("{0}: Coord: {1}, MP4: {2}".format(
@@ -209,7 +213,6 @@ class HiResSequence(object):
             coordinates,
             mp4_path))
 
-        # subprocess.call('rm *.png', shell=True)
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
@@ -243,4 +246,4 @@ def tweet_video():
 
 if __name__ == '__main__':
     print(BASE_DIR)
-    make_local_video()
+    tweet_video()
