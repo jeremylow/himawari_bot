@@ -1,6 +1,8 @@
 from __future__ import print_function
 
 import os
+from os.path import abspath, dirname, join, normpath
+
 import datetime
 import json
 import logging
@@ -21,7 +23,9 @@ from shapely.geometry import Point, MultiPoint
 import config
 import geometry
 
-LOGFILE = 'hires.log'
+BASE_DIR = dirname(abspath(__file__))
+LOGFILE = os.path.join(BASE_DIR, 'hires.log')
+HIRES_FOLDER = os.path.join(BASE_DIR, 'hires')
 
 
 class HiResSequence(object):
@@ -98,7 +102,7 @@ class HiResSequence(object):
     @staticmethod
     def _crop_hires_images(images, lat_start=None, lng_start=None):
         """
-        Create a set of 800x800 png images cropped from the
+        Create a set of 720,720 png images cropped from the
         5500 x 5500 full-sized images.
 
         Args:
@@ -106,17 +110,19 @@ class HiResSequence(object):
             lat_start, lng_start: upper, left-most point to start the crop
 
         Returns:
-            None
+            list of cropped images
         """
         width, height = 720, 720
         top, left = lat_start, lng_start
 
         for idx, image in enumerate(sorted(images)):
-            filename = 'hires/' + image
+            filename = os.path.join(HIRES_FOLDER, image)
             print("got ", filename)
             im = Image.open(filename)
             im2 = im.crop((left, top, left+width, top+height))
-            im2.save("img{0}.png".format(str(idx).zfill(3)))
+            crop_fn = "img{0}.png".format(str(idx).zfill(3))
+            im2.save(os.path.join(BASE_DIR, crop_fn))
+
 
     def _get_cira_images(self, num=60):
         """
@@ -134,7 +140,7 @@ class HiResSequence(object):
 
         image_urls = [link.attrs['href'] for link in links]
 
-        prev_downloaded_images = os.listdir('hires/')
+        prev_downloaded_images = os.listdir(HIRES_FOLDER)
 
         for image in image_urls:
             print(image)
@@ -148,29 +154,30 @@ class HiResSequence(object):
                 # Don't redownload images we already have.
                 continue
 
-            with open('hires/' + image_name, 'wb') as f:
+            with open(os.path.join(HIRES_FOLDER, image_name), 'wb') as f:
                 data = requests.get(full_image_url)
                 f.write(data._content)
-            if os.path.getsize('hires/' + image_name) < 1024:
-                os.remove('hires/' + image_name)
+
+            if os.path.getsize(os.path.join(HIRES_FOLDER, image_name)) < 1024:
+                os.remove(os.path.join(HIRES_FOLDER, image_name))
         return True
 
     @staticmethod
     def _delete_old_cira_images(num=60):
         """
-        Only keep the most recent `num` images (my server is not that large)
+        Only keep the most recent `num` images (my server is not **that** large)
         """
-        images = sorted(os.listdir('hires/'))
+        images = sorted(os.listdir(HIRES_FOLDER))
 
         num_images_to_del = len(images) - num
         if num_images_to_del <= 0:
             return True
         for img in images[:abs(num_images_to_del)]:
-            os.remove('hires/' + img)
+            os.remove(os.path.join(HIRES_FOLDER, img))
         return True
 
     def refresh_images(self, num=60):
-        self._get_cira_images(num)
+        self._get_cira_images(num=num)
         self._delete_old_cira_images(num=num)
 
     def make_hires_animation(self,
@@ -179,8 +186,10 @@ class HiResSequence(object):
                              refresh=False):
         if refresh:
             self.refresh_images(num=90)
-        images = os.listdir('hires/')
-        out = datetime.datetime.utcnow().strftime("%Y%m%d%H%M")
+
+        images = os.listdir(HIRES_FOLDER)
+        out = os.path.join(BASE_DIR, "{0}.mp4".format(
+            datetime.datetime.utcnow().strftime("%Y%m%d%H%M")))
 
         if not (lat_start and lng_start):
             lat_start, lng_start = self._get_start_coord()
@@ -188,19 +197,19 @@ class HiResSequence(object):
         self._crop_hires_images(images,
                                 lat_start=lat_start,
                                 lng_start=lng_start)
-        coordinates = geometry.px_to_lat_long(lat_start+400, lng_start+400)
+        coordinates = geometry.px_to_lat_long(lat_start+360, lng_start+360)
 
-        cmd = ("ffmpeg -framerate 6 -i img%03d.png "
-               "-c:v libx264 -vf fps=6 -pix_fmt yuv420p {0}.mp4".format(out))
-        subprocess.call(shlex.split(cmd))
-        mp4_path = os.path.realpath("./{0}.mp4".format(out))
+        cmd = "{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out)
+        print(cmd)
+        subprocess.call("{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out), shell=True)
+        mp4_path = os.path.realpath(out)
 
         self.logger.debug("{0}: Coord: {1}, MP4: {2}".format(
             datetime.datetime.utcnow().isoformat(),
             coordinates,
             mp4_path))
 
-        subprocess.call('rm *.png', shell=True)
+        # subprocess.call('rm *.png', shell=True)
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
@@ -233,5 +242,5 @@ def tweet_video():
     seq.tweet_video()
 
 if __name__ == '__main__':
-    # make_local_video()
-    tweet_video()
+    print(BASE_DIR)
+    make_local_video()

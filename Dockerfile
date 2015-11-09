@@ -21,6 +21,7 @@ RUN apt-get update && \
 RUN apt-get install -y tree
 
 WORKDIR /data
+
 RUN echo 'cad32$che bust'
 
 RUN git clone https://github.com/jeremylow/himawari_bot.git
