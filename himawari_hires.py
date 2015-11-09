@@ -1,9 +1,10 @@
 from __future__ import print_function
 
 import os
-from os.path import abspath, dirname, join, normpath
+from os.path import abspath, dirname, join
 
 import datetime
+import imghdr
 import json
 import logging
 import logging.handlers
@@ -11,7 +12,6 @@ import random
 import re
 import requests
 import subprocess
-import shlex
 
 from PIL import Image
 
@@ -24,8 +24,8 @@ import config
 import geometry
 
 BASE_DIR = dirname(abspath(__file__))
-LOGFILE = os.path.join(BASE_DIR, 'hires.log')
-HIRES_FOLDER = os.path.join(BASE_DIR, 'hires')
+LOGFILE = join(BASE_DIR, 'hires.log')
+HIRES_FOLDER = join(BASE_DIR, 'hires')
 
 
 class HiResSequence(object):
@@ -119,12 +119,19 @@ class HiResSequence(object):
         top, left = lat_start, lng_start
 
         for idx, image in enumerate(sorted(images)):
-            filename = os.path.join(HIRES_FOLDER, image)
+            filename = join(HIRES_FOLDER, image)
             print("got ", filename)
+
+            # If imghdr can't ID the file, then it's probably corrupt and we'll
+            # just drop that frame and delete the file.
+            if not imghdr.what(filename):
+                os.remove(filename)
+                continue
+
             im = Image.open(filename)
             im2 = im.crop((left, top, left+width, top+height))
             crop_fn = "img{0}.png".format(str(idx).zfill(3))
-            im2.save(os.path.join(BASE_DIR, crop_fn))
+            im2.save(join(BASE_DIR, crop_fn))
 
     def _get_cira_images(self, num=60):
         """
@@ -155,19 +162,19 @@ class HiResSequence(object):
                 print("skipping", image_name)
                 continue
 
-            with open(os.path.join(HIRES_FOLDER, image_name), 'wb') as f:
+            with open(join(HIRES_FOLDER, image_name), 'wb') as f:
                 print("getting", image_name)
                 data = requests.get(full_image_url)
                 f.write(data._content)
 
-            if os.path.getsize(os.path.join(HIRES_FOLDER, image_name)) < 1024:
-                os.remove(os.path.join(HIRES_FOLDER, image_name))
+            if os.path.getsize(join(HIRES_FOLDER, image_name)) < 1024:
+                os.remove(join(HIRES_FOLDER, image_name))
         return True
 
     @staticmethod
     def _delete_old_cira_images(num=60):
         """
-        Only keep the most recent `num` images (my server is not **that** large)
+        Only keep the most recent `num` images (my server is not *that* large)
         """
         images = sorted(os.listdir(HIRES_FOLDER))
 
@@ -175,7 +182,7 @@ class HiResSequence(object):
         if num_images_to_del <= 0:
             return True
         for img in images[:abs(num_images_to_del)]:
-            os.remove(os.path.join(HIRES_FOLDER, img))
+            os.remove(join(HIRES_FOLDER, img))
         return True
 
     def refresh_images(self, num=60):
@@ -190,7 +197,7 @@ class HiResSequence(object):
             self.refresh_images(num=90)
 
         images = os.listdir(HIRES_FOLDER)
-        out = os.path.join(BASE_DIR, "{0}.mp4".format(
+        out = join(BASE_DIR, "{0}.mp4".format(
             datetime.datetime.utcnow().strftime("%Y%m%d%H%M")))
 
         if not (lat_start and lng_start):

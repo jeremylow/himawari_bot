@@ -20,7 +20,7 @@ RUN apt-get update && \
 
 RUN apt-get install -y tree vim
 
-RUN pip install amqp==1.4.7 \
+RUN pip3 install amqp==1.4.7 \
     anyjson==0.3.3 \
     beautifulsoup4==4.4.1 \
     billiard==3.3.0.21 \
