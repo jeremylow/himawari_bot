@@ -152,9 +152,11 @@ class HiResSequence(object):
 
             if image_name in prev_downloaded_images:
                 # Don't redownload images we already have.
+                print("skipping", image_name)
                 continue
 
             with open(os.path.join(HIRES_FOLDER, image_name), 'wb') as f:
+                print("getting", image_name)
                 data = requests.get(full_image_url)
                 f.write(data._content)
 
