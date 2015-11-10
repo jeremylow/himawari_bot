@@ -1,2 +1,2 @@
-*/1 * * * * root python3 /data/himawari_bot/himawari_hires.py
+* */2 * * * root python3 /data/himawari_bot/himawari_hires.py
 

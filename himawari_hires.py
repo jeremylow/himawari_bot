@@ -94,6 +94,7 @@ class HiResSequence(object):
         Returns:
             coordinate tuple (0, 0 being top, left)
         """
+        self.logger.debug("{0}: Getting coordinates".format(time_now()))
         while True:
             p = Point(random.randint(1, 4219), random.randint(732, 5499))
             if p.within(self.EARTH_POLYGON):
@@ -118,6 +119,7 @@ class HiResSequence(object):
         Returns:
             list of cropped images
         """
+        self.logger.debug("{0}: Cropping images".format(time_now()))
         width, height = 720, 720
         top, left = lat_start, lng_start
 
@@ -149,6 +151,7 @@ class HiResSequence(object):
         Returns:
             files (list): List of urls to download
         """
+        self.logger.debug("{0}: Fetching images".format(time_now()))
         page_content = requests.get(self.CIRA_LIST_URL)._content
         soup = BeautifulSoup(page_content, 'html.parser')
         links = soup.find_all(
@@ -195,6 +198,7 @@ class HiResSequence(object):
         return True
 
     def refresh_images(self, num=60):
+        self.logger.debug("{0}: Refreshing images".format(time_now()))
         self._get_cira_images(num=num)
         self._delete_old_cira_images(num=num)
 
@@ -202,6 +206,7 @@ class HiResSequence(object):
                              lat_start=None,
                              lng_start=None,
                              refresh=False):
+        self.logger.debug("{0}: Making animation".format(time_now()))
         if refresh:
             self.refresh_images(num=90)
 
