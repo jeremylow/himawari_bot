@@ -28,8 +28,16 @@ LOGFILE = join(BASE_DIR, 'hires.log')
 HIRES_FOLDER = join(BASE_DIR, 'hires')
 
 
-def time_now():
+def now():
     return datetime.datetime.utcnow().isoformat()
+
+
+def post_slack(msg):
+    payload = {'text': msg}
+    requests.post(
+        config.SLACK_URL,
+        json.dumps(payload),
+        headers={'content-type': 'application/json'})
 
 
 class HiResSequence(object):
@@ -68,7 +76,7 @@ class HiResSequence(object):
             backupCount=5)
         self.logger.addHandler(handler)
         self.logger.debug("{0}: Initialized HiResSequence".format(
-            time_now()
+            now()
         ))
 
     def _get_api(self):
@@ -83,7 +91,7 @@ class HiResSequence(object):
         except Exception as e:
             print(e)
             self.logger.debug("{0}: {1}".format(
-                time_now(), e))
+                now(), e))
             return False
 
     def _get_start_coord(self):
@@ -94,7 +102,7 @@ class HiResSequence(object):
         Returns:
             coordinate tuple (0, 0 being top, left)
         """
-        self.logger.debug("{0}: Getting coordinates".format(time_now()))
+        self.logger.debug("{0}: Getting coordinates".format(now()))
         while True:
             p = Point(random.randint(1, 4219), random.randint(732, 5499))
             if p.within(self.EARTH_POLYGON):
@@ -119,7 +127,7 @@ class HiResSequence(object):
         Returns:
             list of cropped images
         """
-        self.logger.debug("{0}: Cropping images".format(time_now()))
+        self.logger.debug("{0}: Cropping images".format(now()))
         width, height = 720, 720
         top, left = lat_start, lng_start
 
@@ -140,7 +148,7 @@ class HiResSequence(object):
                 im2.save(join(BASE_DIR, crop_fn))
             except Exception as e:
                 self.logger.debug("{0}: {1} failed with exception {2}".format(
-                    time_now(),
+                    now(),
                     str(filename),
                     str(e)))
 
@@ -151,7 +159,7 @@ class HiResSequence(object):
         Returns:
             files (list): List of urls to download
         """
-        self.logger.debug("{0}: Fetching images".format(time_now()))
+        self.logger.debug("{0}: Fetching images".format(now()))
         page_content = requests.get(self.CIRA_LIST_URL)._content
         soup = BeautifulSoup(page_content, 'html.parser')
         links = soup.find_all(
@@ -171,11 +179,9 @@ class HiResSequence(object):
 
             if image_name in prev_downloaded_images:
                 # Don't redownload images we already have.
-                print("skipping", image_name)
                 continue
 
             with open(join(HIRES_FOLDER, image_name), 'wb') as f:
-                print("getting", image_name)
                 data = requests.get(full_image_url)
                 f.write(data._content)
 
@@ -198,7 +204,7 @@ class HiResSequence(object):
         return True
 
     def refresh_images(self, num=60):
-        self.logger.debug("{0}: Refreshing images".format(time_now()))
+        self.logger.debug("{0}: Refreshing images".format(now()))
         self._get_cira_images(num=num)
         self._delete_old_cira_images(num=num)
 
@@ -206,7 +212,7 @@ class HiResSequence(object):
                              lat_start=None,
                              lng_start=None,
                              refresh=False):
-        self.logger.debug("{0}: Making animation".format(time_now()))
+        self.logger.debug("{0}: Making animation".format(now()))
         if refresh:
             self.refresh_images(num=90)
 
@@ -232,16 +238,19 @@ class HiResSequence(object):
         mp4_path = os.path.realpath(out)
 
         self.logger.debug("{0}: Coord: {1}, MP4: {2}".format(
-            time_now(),
+            now(),
             coordinates,
             mp4_path))
 
         return (coordinates, mp4_path)
 
     def tweet_video(self, coordinates=None, mp4=None):
-        self.logger.debug("{0}: Starting tweet".format(time_now()))
+        msg = "{0}: Starting tweet".format(now())
+        self.logger.debug(msg)
+        post_slack(msg=msg)
+
         if not mp4:
-            self.refresh_images(num=90)
+            self.refresh_images(num=75)
             coordinates, mp4 = self.make_hires_animation()
 
         try:
@@ -252,11 +261,12 @@ class HiResSequence(object):
                 status="Coordinates: {0}".format(str(coordinates)),
                 media_ids=[response['media_id']])
         except Exception as e:
-            self.logger.debug("{0}: {1}".format(
-                time_now(), e))
+            self.logger.exception(e)
+            post_slack(msg=e.__repr__())
         os.remove(mp4)
-        self.logger.debug("{0}: Finished tweet".format(
-            time_now()))
+        msg = "{0}: Finished tweet".format(now())
+        self.logger.debug(msg)
+        post_slack(msg)
 
 
 def make_local_video():
