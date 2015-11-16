@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 
 import tweepy
 from shapely.geometry import Point, MultiPoint
+from osm_shortlink import short_osm
 
 import config
 import geometry
@@ -253,12 +254,19 @@ class HiResSequence(object):
             self.refresh_images(num=75)
             coordinates, mp4 = self.make_hires_animation()
 
+        short_link = short_osm(coordinates[0],
+                               coordinates[1],
+                               zoom=6,
+                               marker=True)
+
         try:
             api = self._get_api()
             response = json.loads(
                 api.video_upload(filename=mp4, max_size=15728640))
             api.update_status(
-                status="Coordinates: {0}".format(str(coordinates)),
+                status="Coordinates: {coord}; {short_link}".format(
+                    coord=str(coordinates),
+                    short_link=short_link),
                 media_ids=[response['media_id']])
         except Exception as e:
             self.logger.exception(e)
