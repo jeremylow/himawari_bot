@@ -1,2 +1,2 @@
 0 0,3,6,9,12,15,18,21 * * * root python3 /data/himawari_bot/himawari_hires.py
-0 2,5,10,14,19,23 * * * root python3 /data/himawari_bot/himawari_lores.py
+0 2,5,10,14,19,23 * * * root python3 /data/himawari_bot/himawari_lowres.py
