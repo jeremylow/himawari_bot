@@ -1,8 +1,5 @@
 beautifulsoup4
 requests
-tweepy
-twython
-celery
 pillow
 pyproj
 shapely
