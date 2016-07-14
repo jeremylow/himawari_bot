@@ -5,7 +5,11 @@
 #    pip-compile --output-file requirements.txt requirements.in
 #
 beautifulsoup4==4.4.1
+future==0.15.2            # via python-twitter
+oauthlib==1.1.2           # via requests-oauthlib
 pillow==3.0.0
 pyproj==1.9.4
+python-twitter==3.1
+requests-oauthlib==0.6.2  # via python-twitter
 requests==2.8.1
 shapely==1.5.13
