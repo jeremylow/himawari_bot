@@ -4,3 +4,5 @@ pillow
 pyproj
 shapely
 python-twitter
+pytest
+pycodestyle
