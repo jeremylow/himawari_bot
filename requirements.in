@@ -1,8 +1,8 @@
 beautifulsoup4
 requests
-tweepy
-twython
-celery
 pillow
 pyproj
 shapely
+python-twitter
+pytest
+pycodestyle

@@ -21,3 +21,4 @@ videos/**
 lowres/**
 config.py
 *.log*
+gif.gif
