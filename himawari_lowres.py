@@ -136,4 +136,4 @@ def make_local_gif():
 
 
 if __name__ == '__main__':
-    make_local_gif()
+    main()

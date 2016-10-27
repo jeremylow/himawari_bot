@@ -1,0 +1,44 @@
+---
+- include_vars: config.yml
+
+- name: Update repositories
+  apt: update_cache=yes
+
+- name: Install GEOS
+  apt: name=libgeos-dev state=present
+
+- name: Create app group
+  group: name={{bot_group}} state=present
+
+- name: Create bot user
+  user: name={{bot_user}} group={{bot_group}}
+
+- name: Create public bot directory
+  file: dest={{bot_root}} mode=0775 owner={{bot_user}} group={{bot_group}} state=directory
+
+- name: Clone Git Repository
+  git:
+    repo: "{{ bot_repo }}"
+    dest: "{{ bot_root }}"
+    accept_hostkey: yes
+    force: yes
+
+- name: Install Virtual Environment & Requirements
+  pip:
+    requirements: "{{ bot_root }}/requirements.txt"
+    virtualenv: "{{ bot_root }}/venv/{{ bot_user }}"
+    virtualenv_python: python3.4
+
+- name: Create Config File for Twitter Keys
+  copy:
+    content="{{twitter_keys}}"
+    dest={{bot_root}}/config.py
+
+- name: Install Cron Script
+  template: src=cron.j2 dest=/etc/cron.d/himawari owner=root group=root
+
+- name: Poke Cron
+  file:
+    path: /etc/cron.d/
+    state: touch
+

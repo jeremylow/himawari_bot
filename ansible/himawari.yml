@@ -1,0 +1,11 @@
+---
+ - hosts: all
+   vars_files:
+    - group_vars/all
+   become: yes
+   become_user: root
+   become_method: sudo
+   roles:
+    - git
+    - python
+    - bot

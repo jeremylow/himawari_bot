@@ -1,10 +1,11 @@
 help:
-	@echo "  info 	     show information on current sys config"
+	@echo "  info        show information on current sys config"
 	@echo "  clean       remove unwanted stuff"
 	@echo "  test        run tests"
 	@echo "  lint        run linter"
 	@echo "  notebook    run a jupyter notebook"
 	@echo "  lowres      make a lowres gif"
+	@echo "  deploy      deploy bot to server"
 
 test:
 	PYTHONPATH=. py.test
@@ -34,3 +35,6 @@ lowres:
 
 tweet:
 	python -c 'import himawari_lowres; himawari_lowres.main()'
+
+deploy:
+	ansible-playbook -K -i ansible/hosts ansible/himawari.yml --vault-password-file ~/.vault_pass.txt

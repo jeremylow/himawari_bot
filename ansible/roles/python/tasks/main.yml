@@ -1,0 +1,5 @@
+- name: Install pip
+  apt: name=python3-pip state=present
+
+- name: Install Virtual Environment Support
+  pip: name=virtualenv state=present executable=pip3

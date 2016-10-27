@@ -1,0 +1,6 @@
+---
+bot_user: himawaribot
+bot_group: apps
+bot_root: /opt/himawari
+
+bot_repo: https://github.com/jeremylow/himawari_bot.git
