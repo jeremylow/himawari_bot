@@ -29,6 +29,9 @@
     virtualenv: "{{ bot_root }}/venv/{{ bot_user }}"
     virtualenv_python: python3.4
 
+- name: Correct Bot Ownship and Group Settings
+  command: find {{ bot_root }} -type d -exec chmod 0664 {} \;
+
 - name: Create Config File for Twitter Keys
   copy:
     content="{{twitter_keys}}"
@@ -41,4 +44,3 @@
   file:
     path: /etc/cron.d/
     state: touch
-
