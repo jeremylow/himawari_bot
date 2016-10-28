@@ -109,9 +109,9 @@ def download_jma_images():
 
 
 def images_to_gif():
-    cmd = ("bash mp4_to_gif.sh gif.gif")
+    cmd = ("bash {0}/mp4_to_gif.sh {0} {0}/gif.gif".format(BASE_DIR))
     subprocess.call(shlex.split(cmd))
-    return os.path.realpath("./gif.gif")
+    return os.path.realpath("{0}/gif.gif".format(BASE_DIR))
 
 
 def tweet_gif(gif, status):
