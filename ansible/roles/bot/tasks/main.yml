@@ -14,7 +14,7 @@
   user: name={{bot_user}} group={{bot_group}}
 
 - name: Create public bot directory
-  file: dest={{bot_root}} mode=0775 owner={{bot_user}} group={{bot_group}} state=directory
+  file: dest={{bot_root}} mode=0755 owner={{bot_user}} group={{bot_group}} state=directory
 
 - name: Clone Git Repository
   git:
@@ -29,8 +29,12 @@
     virtualenv: "{{ bot_root }}/venv/{{ bot_user }}"
     virtualenv_python: python3.4
 
-- name: Correct Bot Ownship and Group Settings
-  command: find {{ bot_root }} -type d -exec chmod 0664 {} \;
+- name: Fix permissions on git clone
+  file:
+    path: "{{ bot_root }}"
+    owner: "{{ bot_user }}"
+    group: "{{ bot_group }}"
+    recurse: true
 
 - name: Create Config File for Twitter Keys
   copy:

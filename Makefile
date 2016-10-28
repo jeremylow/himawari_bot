@@ -37,4 +37,4 @@ tweet:
 	python -c 'import himawari_lowres; himawari_lowres.main()'
 
 deploy:
-	ansible-playbook -K -i ansible/hosts ansible/himawari.yml --vault-password-file ~/.vault_pass.txt
+	ansible-playbook -i ansible/hosts ansible/himawari.yml --vault-password-file ~/.vault_pass.txt
