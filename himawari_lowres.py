@@ -13,7 +13,7 @@ import config
 
 BASE_DIR = dirname(abspath(__file__))
 LOGFILE = join(BASE_DIR, 'lowres.log')
-LOWRES_FOLDER = join(BASE_DIR, 'lowres')
+LOWRES_FOLDER = join(BASE_DIR, 'lowres/')
 
 JMA_URL = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106/1d/550/"
 
@@ -77,6 +77,7 @@ def process_image(image):
     new_im = Image.new("RGB", new_size)
     new_im.paste(im, ((new_size[0]-old_size[0])//2,
                       (new_size[1]-old_size[1])//2))
+    new_im = new_im.resize((500,500))
     new_im.save(image)
 
 
@@ -90,7 +91,7 @@ def download_jma_images():
     rounded_now = round_time_10(datetime.datetime.utcnow())
     images = get_jma_images(start_time=rounded_now)
 
-    old_images = os.listdir('lowres')
+    old_images = os.listdir(LOWRES_FOLDER)
 
     for image in images:
         image_name = os.path.basename(image)
@@ -101,9 +102,9 @@ def download_jma_images():
         data = requests.get(image_url)
         if len(data._content) < 2**13:
             continue
-        with open('lowres/' + image_name, 'wb') as f:
+        with open(LOWRES_FOLDER + image_name, 'wb') as f:
             f.write(data._content)
-        process_image('lowres/' + image_name)
+        process_image(LOWRES_FOLDER + image_name)
     return rounded_now.isoformat()
 
 
