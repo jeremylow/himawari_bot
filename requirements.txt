@@ -12,7 +12,7 @@ py==1.4.31                # via pytest
 pycodestyle==2.0.0
 pyproj==1.9.4
 pytest==3.0.3
-python-twitter==3.1
+python-twitter==3.2
 requests-oauthlib==0.6.2  # via python-twitter
 requests==2.8.1
 shapely==1.5.13
