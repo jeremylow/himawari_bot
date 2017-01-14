@@ -1,5 +1,5 @@
 ---
- - hosts: all
+ - hosts: rpi
    vars_files:
     - group_vars/all
    become: yes
@@ -9,4 +9,4 @@
     - git
     - python
     - bot
-    - cron_lowres
+    - cron_hires
