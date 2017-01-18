@@ -1,11 +1,30 @@
----
- - hosts: rpi
-   vars_files:
+# Add this snippet to the top of your playbook.
+# It will install python2 if missing (but checks first so no expensive repeated apt updates)
+# gwillem@gmail.com
+
+- hosts: xenials
+  gather_facts: False
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  tasks:
+  - name: install python 2
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+
+
+##############
+- hosts: rpi
+  vars_files:
     - group_vars/all
-   become: yes
-   become_user: root
-   become_method: sudo
-   roles:
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+    - xenial
     - git
     - python
     - bot

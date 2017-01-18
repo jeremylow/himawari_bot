@@ -29,12 +29,13 @@ lint:
 notebook:
 	jupyter notebook --no-browser
 
-.PHONY: lowres
-lowres:
-	python himawari_lowres.py
-
 tweet:
 	python -c 'import himawari_lowres; himawari_lowres.main()'
 
-deploy:
+.PHONY: hires
+hires:
+	ansible-playbook -i ansible/hosts ansible/hires.yml --vault-password-file ~/.vault_pass.txt
+
+.PHONY: lowres
+lowres:
 	ansible-playbook -i ansible/hosts ansible/himawari.yml --vault-password-file ~/.vault_pass.txt

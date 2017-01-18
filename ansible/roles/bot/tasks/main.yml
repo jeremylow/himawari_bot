@@ -4,6 +4,21 @@
 - name: Update repositories
   apt: update_cache=yes
 
+- name: Install pillow prerequisites
+  apt:
+    name:
+      - libtiff5-dev
+      - libjpeg8-dev
+      - zlib1g-dev
+      - libfreetype6-dev
+      - liblcms2-dev
+      - libwebp-dev
+      - tcl8.6-dev
+      - tk8.6-dev
+      - python-tk
+    state: present
+
+
 - name: Install GEOS
   apt: name=libgeos-dev state=present
 
@@ -27,7 +42,7 @@
   pip:
     requirements: "{{ bot_root }}/requirements.txt"
     virtualenv: "{{ bot_root }}/venv/{{ bot_user }}"
-    virtualenv_python: python3.4
+    virtualenv_python: python3
 
 - name: Fix permissions on git clone
   file:
