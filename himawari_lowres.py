@@ -24,7 +24,7 @@ LOG_FILENAME = os.path.join(BASE_DIR, 'lowres.log')
 def set_up_logging(level=logging.DEBUG):
     global logger
     logger = logging.getLogger('LowResLogger')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
 
     handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=1048576, backupCount=5)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
