@@ -16,9 +16,9 @@ import logging
 import logging.handlers
 import random
 import re
-import requests
 import subprocess
 
+import requests
 from PIL import Image
 
 from bs4 import BeautifulSoup
@@ -142,7 +142,7 @@ def crop_hires_images(images, lat_start=None, lng_start=None):
             im = Image.open(filename)
             im2 = im.crop((left, top, left+width, top+height))
             crop_fn = "img{0}.png".format(str(idx).zfill(3))
-            im2.save(join(BASE_DIR, crop_fn))
+            im2.save(join(HIRES_FOLDER, crop_fn))
         except Exception as e:
             logger.error("Failed to crop image.", exc_info=True)
             continue
@@ -191,15 +191,15 @@ def delete_old_cira_images(num=60):
         num (int, optional): number of images to retain on the server
     """
     logger.info("Deleting old CIRA images")
-    images = sorted(os.listdir(HIRES_FOLDER))
+    images = sorted([img for img in os.listdir(HIRES_FOLDER) if img.startswith('full')])
 
-    num_images_to_del = len(images) - num
+    num_images_to_del = max(len(images) - num, 0)
     logger.debug("Deleting %s images", num_images_to_del)
 
     if num_images_to_del <= 0:
         return True
 
-    for img in images[:abs(num_images_to_del)]:
+    for img in images[:num_images_to_del]:
         logger.debug("Deleting %s", img)
         os.remove(join(HIRES_FOLDER, img))
 
@@ -233,9 +233,9 @@ def make_hires_animation(lat_start=None, lng_start=None):
     crop_hires_images(images, lat_start=lat_start, lng_start=lng_start)
     coordinates = geometry.px_to_lat_long(lat_start+360, lng_start+360)
 
-    cmd = "{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out)
+    cmd = "{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, HIRES_FOLDER, out)
     logger.debug("Hires command: %s", cmd)
-    subprocess.call("{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, BASE_DIR, out), shell=True)
+    subprocess.call(cmd, shell=True)
     mp4_path = os.path.realpath(out)
     return (coordinates, mp4_path)
 
