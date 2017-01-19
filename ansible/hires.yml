@@ -24,7 +24,6 @@
   become_user: root
   become_method: sudo
   roles:
-    - xenial
     - git
     - python
     - bot
