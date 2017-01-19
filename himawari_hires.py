@@ -133,9 +133,13 @@ def crop_hires_images(images, lat_start=None, lng_start=None):
 
         # If imghdr can't ID the file, then it's probably corrupt and we'll
         # just drop that frame and delete the file.
-        if not imghdr.what(filename):
-            logger.debug("Deleting %s", filename)
-            os.remove(filename)
+        try:
+            if not imghdr.what(filename):
+                logger.debug("Deleting %s", filename)
+                os.remove(filename)
+                continue
+        except Exception as e:
+            logger.error(str(e), exc_info=True)
             continue
 
         try:
