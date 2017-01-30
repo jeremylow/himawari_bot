@@ -27,6 +27,7 @@ import twitter
 from shapely.geometry import Point, MultiPoint
 from osm_shortlink import short_osm
 
+from common import get_api, set_up_logging
 import config
 import geometry
 
@@ -58,34 +59,6 @@ POINTS = [
 
 # Polygon delimiting the 'interesting' parts of the Earth.
 EARTH_POLYGON = MultiPoint(POINTS).convex_hull
-
-
-def set_up_logging(level=logging.DEBUG):
-    global logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(level)
-
-    handler = logging.handlers.RotatingFileHandler(LOGFILE,
-                                                   maxBytes=1048576,
-                                                   backupCount=5)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-
-def get_api():
-    """Returns an authenticated Twitter API instance"""
-    logger.info('Getting API')
-    api = twitter.Api(
-        config.CONSUMER_KEY,
-        config.CONSUMER_SECRET,
-        config.ACCESS_KEY,
-        config.ACCESS_SECRET,
-        tweet_mode="extended",
-        sleep_on_rate_limit=True)
-    logger.debug('Using Api: %s', api)
-    return api
 
 
 def get_start_coord():
@@ -207,6 +180,11 @@ def delete_old_cira_images(num=60):
         logger.debug("Deleting %s", img)
         os.remove(join(HIRES_FOLDER, img))
 
+    # delete previously cropped png files too:
+    logger.debug("Deleting PNG files")
+    images = [os.remove(join(HIRES_FOLDER, img)) for img in os.listdir(HIRES_FOLDER) if os.path.splitext(img)[1] == '.png']
+    logger.debug("Deleted %s PNG files", len(images))
+
 
 def refresh_images(num=60):
     """Upadtes images for use by deleting old, getting new.
@@ -266,5 +244,5 @@ def tweet_video(coordinates=None, mp4=None):
 
 
 if __name__ == '__main__':
-    set_up_logging()
+    set_up_logging(log_file=LOGFILE)
     tweet_video()
