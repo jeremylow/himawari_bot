@@ -28,7 +28,6 @@ from shapely.geometry import Point, MultiPoint
 from osm_shortlink import short_osm
 
 from common import get_api, set_up_logging
-import config
 import geometry
 
 BASE_DIR = dirname(abspath(__file__))
@@ -244,5 +243,5 @@ def tweet_video(coordinates=None, mp4=None):
 
 
 if __name__ == '__main__':
-    set_up_logging(log_file=LOGFILE)
+    logger = set_up_logging(log_file=LOGFILE)
     tweet_video()

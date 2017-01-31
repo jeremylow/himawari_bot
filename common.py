@@ -1,3 +1,5 @@
+import logging
+
 import twitter
 import config
 
@@ -25,3 +27,5 @@ def set_up_logging(log_file=None, level=logging.INFO):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
+    return logger
