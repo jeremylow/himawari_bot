@@ -2,54 +2,31 @@ import os
 from os.path import abspath, dirname, join
 
 import datetime
-import logging
-import logging.handlers
 import requests
 import subprocess
 import shlex
 
 from PIL import Image
 
-import twitter
-import config
+from common import get_api, set_up_logging
+
 
 BASE_DIR = dirname(abspath(__file__))
 LOGFILE = join(BASE_DIR, 'lowres.log')
 LOWRES_FOLDER = join(BASE_DIR, 'lowres/')
 JMA_URL = "http://himawari8-dl.nict.go.jp/himawari8/img/D531106/1d/550/"
-
-LOG_FILENAME = os.path.join(BASE_DIR, 'lowres.log')
-
-
-def set_up_logging(level=logging.DEBUG):
-    global logger
-    logger = logging.getLogger('LowResLogger')
-    logger.setLevel(level)
-
-    handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=1048576, backupCount=5)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-
-def get_api():
-    api = twitter.Api(
-        config.CONSUMER_KEY,
-        config.CONSUMER_SECRET,
-        config.ACCESS_KEY,
-        config.ACCESS_SECRET,
-        sleep_on_rate_limit=True)
-    logger.debug('using Api: {0}'.format(api))
-    return api
+NOAA_URL = "ftp://ftp.nnvl.noaa.gov/GOES/HIMAWARI/simplecontrast/"
 
 
 def round_time_10(dt):
     # Round date down to nearest 0.1 hour, then remove seconds & microseconds
+    logger.debug("Rounding {0}".format(dt))
     rounded_date = dt - datetime.timedelta(minutes=dt.minute % 10)
     rounded_date = rounded_date.replace(second=0, microsecond=0)
 
     # Give them time to upload new image
     rounded_date -= datetime.timedelta(minutes=10)
+    logger.debug("Rounded to {0}".format(rounded_date))
     return rounded_date
 
 
@@ -75,9 +52,10 @@ def get_jma_images(start_time=None, num=48):
     Returns:
         images (list): List of [num] filenames for images to download.
     """
-    logger.debug('getting images')
+    logger.debug('Getting images')
     if not start_time:
         start_time = round_time_10(datetime.datetime.utcnow())
+    logger.debug("Start time: {0}".format(start_time))
     images = []
     for i in range(0, num):
         fn = date_to_jma_filename(round_time_10(start_time))
@@ -91,6 +69,7 @@ def delete_old_images(num=48):
     """
     Only keep the most recent `num` images (my server is not *that* large)
     """
+    logger.debug("Starting delete of old images")
     images = sorted(os.listdir(LOWRES_FOLDER))
 
     num_images_to_del = len(images) - num
@@ -107,14 +86,17 @@ def delete_old_images(num=48):
 
 def process_image(image):
     logger.debug('processing image: {0}'.format(image))
-    im = Image.open(image)
-    old_size = im.size
-    new_size = (650, 650)
-    new_im = Image.new("RGB", new_size)
-    new_im.paste(im, ((new_size[0]-old_size[0])//2,
-                      (new_size[1]-old_size[1])//2))
-    new_im = new_im.resize((500,500))
-    new_im.save(image)
+    try:
+        im = Image.open(image)
+        old_size = im.size
+        new_size = (650, 650)
+        new_im = Image.new("RGB", new_size)
+        new_im.paste(im, ((new_size[0] - old_size[0]) // 2,
+                          (new_size[1] - old_size[1]) // 2))
+        new_im = new_im.resize((500, 500))
+        new_im.save(image)
+    except Exception as e:
+        logger.error(str(e))
 
 
 def download_jma_images():
@@ -151,17 +133,18 @@ def download_jma_images():
 
 def images_to_gif():
     logger.debug('creating GIF')
-    cmd = ("bash {0}/mp4_to_gif.sh {0} {0}/gif.gif".format(BASE_DIR))
+    cmd = ("{0}/mp4_to_gif.sh {0} {0}/gif.gif".format(BASE_DIR))
     subprocess.call(shlex.split(cmd))
     return os.path.realpath("{0}/gif.gif".format(BASE_DIR))
 
 
 def tweet_gif(gif, status):
+    logger.debug("Starting to tweet")
     api = get_api()
     uploaded_gif = api.UploadMediaChunked(media=gif, media_category="tweet_gif")
     logger.debug('media ID: {0}'.format(uploaded_gif))
     status = api.PostUpdate(status=status, media=uploaded_gif)
-    logger.debug('status: {0}'.format(status))
+    logger.debug('Finished tweet: {0}'.format(status))
     return status
 
 
@@ -183,6 +166,6 @@ def make_local_gif():
 
 
 if __name__ == '__main__':
-    set_up_logging()
-    logger.debug('started program')
+    logger = set_up_logging(log_file=LOGFILE)
+    logger.info('Started program')
     main()

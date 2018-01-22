@@ -12,8 +12,6 @@ import os
 from os.path import abspath, dirname, join, getsize
 
 import imghdr
-import logging
-import logging.handlers
 import random
 import re
 import subprocess
@@ -23,7 +21,6 @@ from PIL import Image
 
 from bs4 import BeautifulSoup
 
-import twitter
 from shapely.geometry import Point, MultiPoint
 from osm_shortlink import short_osm
 
@@ -116,7 +113,7 @@ def crop_hires_images(images, lat_start=None, lng_start=None):
 
         try:
             im = Image.open(filename)
-            im2 = im.crop((left, top, left+width, top+height))
+            im2 = im.crop((left, top, left + width, top + height))
             crop_fn = "img{0}.png".format(str(idx).zfill(3))
             im2.save(join(HIRES_FOLDER, crop_fn))
         except Exception as e:
@@ -181,8 +178,10 @@ def delete_old_cira_images(num=60):
 
     # delete previously cropped png files too:
     logger.debug("Deleting PNG files")
-    images = [os.remove(join(HIRES_FOLDER, img)) for img in os.listdir(HIRES_FOLDER) if os.path.splitext(img)[1] == '.png']
-    logger.debug("Deleted %s PNG files", len(images))
+    for img in os.listdir(HIRES_FOLDER):
+        if os.path.splitext(img)[1] == '.png':
+            logger.debug("Deleted %s", img)
+            os.remove(join(HIRES_FOLDER, img))
 
 
 def refresh_images(num=60):
@@ -212,7 +211,7 @@ def make_hires_animation(lat_start=None, lng_start=None):
         lat_start, lng_start = get_start_coord()
 
     crop_hires_images(images, lat_start=lat_start, lng_start=lng_start)
-    coordinates = geometry.px_to_lat_long(lat_start+360, lng_start+360)
+    coordinates = geometry.px_to_lat_long(lat_start + 360, lng_start + 360)
 
     cmd = "{0}/hires_mp4.sh {1} {2}".format(BASE_DIR, HIRES_FOLDER, out)
     logger.debug("Hires command: %s", cmd)

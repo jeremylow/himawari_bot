@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 
 import twitter
 import config
@@ -18,7 +19,7 @@ def get_api():
     return api
 
 
-def set_up_logging(log_file=None, level=logging.INFO):
+def set_up_logging(log_file=None, level=logging.DEBUG):
     global logger
     logger = logging.getLogger(__name__)
     logger.setLevel(level)
